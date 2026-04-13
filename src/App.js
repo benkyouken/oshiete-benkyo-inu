@@ -263,6 +263,8 @@ export default function App() {
   const [hint, setHint] = useState(""); const [hintLoading, setHintLoading] = useState(false);
   const [hintShown, setHintShown] = useState(false);
   const [answer, setAnswer] = useState(""); const [answerLoading, setAnswerLoading] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
+  const [retryLoading, setRetryLoading] = useState(false);
   const [currentLogId, setCurrentLogId] = useState(null);
   const [teacherComment, setTeacherComment] = useState(null);
   const [error, setError] = useState(null);
