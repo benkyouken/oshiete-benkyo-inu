@@ -79,7 +79,7 @@ function buildUserContent(grade, subject, question, imageBase64) {
 
 // ── Dog mascot SVG ───────────────────────────────────────────
 function DogFace({ size = 56, mood = "normal" }) {
-  const eyes = mood === "think" ? "^ ^" : mood === "happy" ? "^ω^" : "•ᴗ•";
+  
   return (
     <div style={{ width: size, height: size, borderRadius: "50%", background: "linear-gradient(135deg,#FBBF24,#F59E0B)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: size * 0.52, boxShadow: "0 3px 10px rgba(251,191,36,0.4)", flexShrink: 0, border: "3px solid #fff" }}>
       🐶
