@@ -10,7 +10,7 @@ const GRADES = [
 ];
 
 const SUBJECTS = [
-  { label: "数学", emoji: "📐", color: "#FF6B6B", bg: "#FFF0F0" },
+  { label: "算数・数学", emoji: "📐", color: "#FF6B6B", bg: "#FFF0F0" },
   { label: "英語", emoji: "🔤", color: "#FF9F43", bg: "#FFF7ED" },
   { label: "国語", emoji: "📖", color: "#54A0FF", bg: "#EFF6FF" },
   { label: "理科", emoji: "🔬", color: "#5F27CD", bg: "#F5F3FF" },
@@ -21,24 +21,43 @@ const TEACHER_PASSWORD = "home2024";
 const STORAGE_KEY = "qa-logs";
 
 const SYSTEM_PROMPT = `あなたは「勉強犬」という名前の、元気でやさしい犬の家庭教師キャラクターです。
-生徒からの質問に答えるとき：
-- 語尾に「わん！」「だよ！」「ね！」など犬らしさとやさしさを混ぜる（やりすぎない程度に）
-- 学年に合わせた言葉遣いで答える
-- 小学生にはひらがなを多めに使う
-- 答えだけでなく「なぜそうなるか」を説明する
-- 励ましの言葉を必ず添える
-- 絵文字を使って親しみやすくする
-- 回答は長すぎず要点を絞る`;
+
+語尾に「わん」「だよ」「ね」など犬らしさとやさしさを自然に混ぜてください。
+
+学年に合わせた言葉遣いで答えてください。
+小学生にはひらがなを多めに使ってください。
+
+答えだけでなく「なぜそうなるか」を説明してください。
+
+励ましの言葉を必ず最後に添えてください。
+
+絵文字を使って親しみやすくしてください。
+
+文章はチャットのように短い文で区切って、こまめに改行してください。
+1文ごとに改行するくらいの感覚で書いてください。
+
+コロン、セミコロン、ダッシュ、矢印などの特殊記号は一切使わないでください。
+数式は「xの2乗」「aたすb」のように言葉で書いてください。
+
+写真なしのテキストだけの質問にも同じように丁寧に答えてください。`;
 
 const HINT_PROMPT = `あなたは「勉強犬」という名前の、元気でやさしい犬の家庭教師キャラクターです。
-ヒントだけを出してください：
-- 答えは絶対に教えない
-- 「どこから考えればいいか」「どんな公式が使えるか」のとっかかりだけを伝える
-- 1〜2文の短いヒントにする
-- 学年に合わせた言葉遣いで
-- 小学生にはやさしくひらがなを多めに
-- 最後に犬らしく「いっしょにがんばろう！🐾」のような一言を
-- 絶対に解き方の手順や答えを示さないこと`;
+
+ヒントだけを出してください。
+
+答えは絶対に教えないでください。
+
+「どこから考えればいいか」や「どんな知識が使えるか」のとっかかりだけを伝えてください。
+
+短く1文か2文でヒントを出してください。
+
+学年に合わせた言葉遣いで書いてください。
+小学生にはやさしくひらがなを多めに使ってください。
+
+最後に「いっしょにがんばろう🐾」のような一言を添えてください。
+
+解き方の手順や答えは絶対に示さないでください。
+コロンなどの特殊記号は使わないでください。`;
 
 async function loadLogs() {
   try { const r = await window.storage.get(STORAGE_KEY, true); return r ? JSON.parse(r.value) : []; }
@@ -61,7 +80,7 @@ const subjectEmoji = sub => SUBJECTS.find(s => s.label === sub)?.emoji || "";
 const subjectBg = sub => SUBJECTS.find(s => s.label === sub)?.bg || "#f9f9f9";
 
 async function callClaude(systemPrompt, userContent) {
-  const res = await fetch("/api/chat", {
+  const res = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST", headers: { "Content-Type": "application/json", "x-api-key": process.env.REACT_APP_ANTHROPIC_API_KEY, "anthropic-version": "2023-06-01" },
     body: JSON.stringify({ model: "claude-sonnet-4-20250514", max_tokens: 1000, system: systemPrompt, messages: [{ role: "user", content: userContent }] }),
   });
@@ -79,7 +98,7 @@ function buildUserContent(grade, subject, question, imageBase64) {
 
 // ── Dog mascot SVG ───────────────────────────────────────────
 function DogFace({ size = 56, mood = "normal" }) {
-  
+  const eyes = mood === "think" ? "^ ^" : mood === "happy" ? "^ω^" : "•ᴗ•";
   return (
     <div style={{ width: size, height: size, borderRadius: "50%", background: "linear-gradient(135deg,#FBBF24,#F59E0B)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: size * 0.52, boxShadow: "0 3px 10px rgba(251,191,36,0.4)", flexShrink: 0, border: "3px solid #fff" }}>
       🐶
@@ -265,6 +284,9 @@ export default function App() {
   const [answer, setAnswer] = useState(""); const [answerLoading, setAnswerLoading] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
   const [retryLoading, setRetryLoading] = useState(false);
+  const [followUpQuestion, setFollowUpQuestion] = useState("");
+  const [followUpMessages, setFollowUpMessages] = useState([]);
+  const [followUpLoading, setFollowUpLoading] = useState(false);
   const [currentLogId, setCurrentLogId] = useState(null);
   const [teacherComment, setTeacherComment] = useState(null);
   const [error, setError] = useState(null);
@@ -336,10 +358,35 @@ export default function App() {
     finally { setRetryLoading(false); }
   };
 
+
+  const handleFollowUp = async () => {
+    if (!followUpQuestion.trim()) return;
+    const userMsg = followUpQuestion.trim();
+    setFollowUpMessages(prev => [...prev, { role: "user", text: userMsg }]);
+    setFollowUpQuestion("");
+    setFollowUpLoading(true);
+    try {
+      const history = followUpMessages.map(m => ({ role: m.role === "user" ? "user" : "assistant", content: m.text }));
+      const messages = [
+        ...history,
+        { role: "user", content: `学年：${grade}\n科目：${subject}\n最初の質問：${question || "画像の問題"}\n最初の解説：${answer}\n\n追加質問：${userMsg}` }
+      ];
+      const res = await fetch("/api/chat", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ model: "claude-sonnet-4-20250514", max_tokens: 1000, system: SYSTEM_PROMPT, messages }),
+      });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error.message);
+      const text = data.content?.map(b => b.text || "").join("\n") || "";
+      setFollowUpMessages(prev => [...prev, { role: "assistant", text }]);
+    } catch { setFollowUpMessages(prev => [...prev, { role: "assistant", text: "エラーが出たよ。もう一度試してね🐾" }]); }
+    finally { setFollowUpLoading(false); }
+  };
+
   const reset = () => {
     setStep("select"); setGrade(null); setSubject(null); setImage(null); setImageBase64(null);
     setQuestion(""); setHint(""); setHintShown(false); setAnswer("");
-    setCurrentLogId(null); setTeacherComment(null); setError(null); setRetryCount(0); setRetryLoading(false);
+    setCurrentLogId(null); setTeacherComment(null); setError(null); setRetryCount(0); setRetryLoading(false); setFollowUpQuestion(""); setFollowUpMessages([]); setFollowUpLoading(false);
   };
 
   const goToCamera = () => {
@@ -543,6 +590,54 @@ export default function App() {
                   {teacherComment.split("\n").map((l, i) => <p key={i} style={{ margin: "3px 0" }}>{l}</p>)}
                 </div>
               </section>
+            )}
+
+            {!answerLoading && answer && followUpMessages.length > 0 && (
+              <section style={{ ...S.card, border: "2px solid #FFE4E4" }}>
+                <div style={{ fontSize: 13, fontWeight: "800", color: "#FF6B6B", marginBottom: 12 }}>💬 追加の質問</div>
+                {followUpMessages.map((msg, i) => (
+                  <div key={i} style={{ marginBottom: 10 }}>
+                    {msg.role === "user" ? (
+                      <div style={{ display: "flex", justifyContent: "flex-end" }}>
+                        <div style={{ background: "#FF6B6B", color: "#fff", borderRadius: "16px 16px 4px 16px", padding: "10px 14px", fontSize: 13, maxWidth: "80%", lineHeight: 1.6 }}>
+                          {msg.text}
+                        </div>
+                      </div>
+                    ) : (
+                      <div style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
+                        <span style={{ fontSize: 22, flexShrink: 0 }}>🐶</span>
+                        <div style={{ background: "#FFF0F0", borderRadius: "4px 16px 16px 16px", padding: "10px 14px", fontSize: 13, lineHeight: 1.8, border: "2px solid #FFE4E4" }}>
+                          {msg.text.split("\n").map((line, j) => <p key={j} style={{ margin: "2px 0" }}>{line}</p>)}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))}
+                {followUpLoading && (
+                  <div style={{ display: "flex", gap: 8, alignItems: "center", padding: "8px 0" }}>
+                    <span style={{ fontSize: 22 }}>🐶</span>
+                    <div style={{ display: "flex", gap: 5 }}>
+                      {[0, 0.2, 0.4].map((d, i) => <span key={i} style={{ width: 8, height: 8, borderRadius: "50%", background: "#FF6B6B", display: "inline-block", animation: "bounce 1.2s infinite", animationDelay: `${d}s` }} />)}
+                    </div>
+                  </div>
+                )}
+              </section>
+            )}
+
+            {!answerLoading && answer && (
+              <div style={{ display: "flex", gap: 8 }}>
+                <input
+                  value={followUpQuestion}
+                  onChange={e => setFollowUpQuestion(e.target.value)}
+                  onKeyDown={e => e.key === "Enter" && handleFollowUp()}
+                  placeholder="続けて質問できるよ🐾"
+                  style={{ flex: 1, padding: "12px 14px", fontSize: 14, border: "2.5px solid #FFE4E4", borderRadius: 12, fontFamily: "inherit", outline: "none" }}
+                />
+                <button onClick={handleFollowUp} disabled={followUpLoading || !followUpQuestion.trim()}
+                  style={{ padding: "12px 16px", fontSize: 18, background: followUpQuestion.trim() ? "#FF6B6B" : "#FFE4E4", border: "none", borderRadius: 12, cursor: "pointer" }}>
+                  →
+                </button>
+              </div>
             )}
 
             {!answerLoading && answer && (
