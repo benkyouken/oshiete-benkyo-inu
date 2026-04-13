@@ -61,7 +61,7 @@ const subjectEmoji = sub => SUBJECTS.find(s => s.label === sub)?.emoji || "";
 const subjectBg = sub => SUBJECTS.find(s => s.label === sub)?.bg || "#f9f9f9";
 
 async function callClaude(systemPrompt, userContent) {
-  const res = await fetch("/api/chat", {
+  const res = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST", headers: { "Content-Type": "application/json", "x-api-key": process.env.REACT_APP_ANTHROPIC_API_KEY, "anthropic-version": "2023-06-01" },
     body: JSON.stringify({ model: "claude-sonnet-4-20250514", max_tokens: 1000, system: systemPrompt, messages: [{ role: "user", content: userContent }] }),
   });
@@ -79,7 +79,7 @@ function buildUserContent(grade, subject, question, imageBase64) {
 
 // ── Dog mascot SVG ───────────────────────────────────────────
 function DogFace({ size = 56, mood = "normal" }) {
-  
+  const eyes = mood === "think" ? "^ ^" : mood === "happy" ? "^ω^" : "•ᴗ•";
   return (
     <div style={{ width: size, height: size, borderRadius: "50%", background: "linear-gradient(135deg,#FBBF24,#F59E0B)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: size * 0.52, boxShadow: "0 3px 10px rgba(251,191,36,0.4)", flexShrink: 0, border: "3px solid #fff" }}>
       🐶
@@ -311,10 +311,33 @@ export default function App() {
     finally { setAnswerLoading(false); }
   };
 
+
+  const handleRetry = async () => {
+    if (!grade || !subject || !answer) return;
+    setRetryLoading(true);
+    const retryPrompt = `あなたはHOME個別指導塾の優しく丁寧な勉強犬先生です。
+さっきの説明がわかりにくかったようです。同じ内容をもっとやさしく、別の言い方で説明してください。
+- より簡単な言葉を使う
+- 具体的な例を使う
+- ステップを細かく分ける
+- ${retryCount + 1}回目の説明なのでさらにわかりやすく工夫する
+- 励ましの言葉を添える`;
+    try {
+      const userContent = [];
+      if (imageBase64) userContent.push({ type: "image", source: { type: "base64", media_type: "image/jpeg", data: imageBase64 } });
+      userContent.push({ type: "text", text: `学年：${grade}\n科目：${subject}\n${question ? `質問：${question}` : "この問題を解説してください。"}\n\n前回の説明：${answer}\n\nもっとわかりやすく説明してください。` });
+      const text = await callClaude(retryPrompt, userContent);
+      setAnswer(text);
+      setRetryCount(c => c + 1);
+      await updateLog(currentLogId, { answer: text });
+    } catch { }
+    finally { setRetryLoading(false); }
+  };
+
   const reset = () => {
     setStep("select"); setGrade(null); setSubject(null); setImage(null); setImageBase64(null);
     setQuestion(""); setHint(""); setHintShown(false); setAnswer("");
-    setCurrentLogId(null); setTeacherComment(null); setError(null);
+    setCurrentLogId(null); setTeacherComment(null); setError(null); setRetryCount(0); setRetryLoading(false);
   };
 
   const goToCamera = () => {
@@ -520,6 +543,12 @@ export default function App() {
               </section>
             )}
 
+            {!answerLoading && answer && (
+              <button onClick={handleRetry} disabled={retryLoading}
+                style={{ width: "100%", padding: "13px", fontSize: 14, fontWeight: "900", background: retryLoading ? "#FEE2E2" : "#FFF0F0", color: "#FF6B6B", border: "2.5px solid #FF6B6B", borderRadius: 14, cursor: "pointer", marginBottom: 8 }}>
+                {retryLoading ? "考え中...🐾" : `🔄 もっとわかりやすく説明して${retryCount > 0 ? `（${retryCount}回目）` : ""}`}
+              </button>
+            )}
             {!answerLoading && answer && (
               <button onClick={reset}
                 style={{ width: "100%", padding: "14px", fontSize: 15, fontWeight: "900", background: "linear-gradient(135deg,#FF6B6B,#FF9F43)", color: "#fff", border: "none", borderRadius: 16, cursor: "pointer", boxShadow: "0 4px 0 #C2410C", letterSpacing: "0.3px" }}>
