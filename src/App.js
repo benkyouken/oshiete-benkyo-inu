@@ -433,6 +433,7 @@ export default function App() {
           </div>
           <div style={{ display: "flex", gap: 6 }}>
             {step !== "select" && <button onClick={reset} style={S.chipBtn}>🔄 最初から</button>}
+            <button onClick={() => setShowHistory(true)} style={{ ...S.chipBtn, color: "#059669", background: "#ECFDF5" }}>📋 履歴</button>
             <button onClick={() => setMode("teacherLogin")} style={{ ...S.chipBtn, color: "#D97706", background: "#FEF3C7", border: "2px solid #FCD34D" }}>先生🔐</button>
           </div>
         </div>
@@ -485,6 +486,12 @@ export default function App() {
             </div>
           )}
         </section>
+          <div style={{ marginTop: 12 }}>
+            <div style={{ fontSize: 12, fontWeight: "800", color: "#aaa", marginBottom: 6 }}>なまえを入力してね（省略OK）</div>
+            <input value={studentName} onChange={e => setStudentName(e.target.value)}
+              placeholder="例：田中たろう"
+              style={{ width: "100%", padding: "10px 12px", fontSize: 13, border: "2.5px solid #FFE4E4", borderRadius: 12, fontFamily: "inherit", outline: "none", boxSizing: "border-box" }} />
+          </div>
 
         {/* ── STEP 2: Camera prompt ── */}
         {step === "select" && (
