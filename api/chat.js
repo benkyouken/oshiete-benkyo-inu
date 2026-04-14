@@ -30,9 +30,10 @@ export default async function handler(req, res) {
       const logs = await redis.get('qa-logs') || [];
       logs.unshift(entry);
 
-      await Promise.all([
-        redis.set('qa-logs', logs.slice(0, 200)),
-        resend.emails.send({
+      await redis.set('qa-logs', logs.slice(0, 200));
+
+      // メールは投げっぱなし（タイムアウト防止）
+      resend.emails.send({
         from: 'onboarding@resend.dev',
         to: process.env.NOTIFY_EMAIL,
         subject: `【教えて！勉強犬】${entry.grade}・${entry.subject}の質問が届きました`,
