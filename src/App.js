@@ -18,7 +18,6 @@ const SUBJECTS = [
 ];
 
 const TEACHER_PASSWORD = "home2024";
-const STORAGE_KEY = "qa-logs";
 
 const SYSTEM_PROMPT = `あなたは「勉強犬」という名前の、元気でやさしい犬の家庭教師キャラクターです。
 
