@@ -148,6 +148,11 @@ function TeacherDashboard({ onClose }) {
   const [filter, setFilter] = useState("すべて"); const [expanded, setExpanded] = useState(null);
   const [editingId, setEditingId] = useState(null); const [draftComment, setDraftComment] = useState("");
   const [saving, setSaving] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
+  const [historyName, setHistoryName] = useState("");
+  const [historyLogs, setHistoryLogs] = useState([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [historySearched, setHistorySearched] = useState(false);
 
   useEffect(() => { loadLogs().then(d => { setLogs(d); setLoading(false); }); }, []);
 
