@@ -18,6 +18,7 @@ const SUBJECTS = [
 ];
 
 const TEACHER_PASSWORD = "home2024";
+const STORAGE_KEY = "qa-logs";
 
 const SYSTEM_PROMPT = `あなたは「勉強犬」という名前の、元気でやさしい犬の家庭教師キャラクターです。
 
@@ -59,22 +60,18 @@ const HINT_PROMPT = `あなたは「勉強犬」という名前の、元気で�
 コロンなどの特殊記号は使わないでください。`;
 
 async function loadLogs() {
-  try {
-    const res = await fetch('/api/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'getLogs' }) });
-    const data = await res.json();
-    return data.logs || [];
-  } catch { return []; }
+  try { const r = await window.storage.get(STORAGE_KEY, true); return r ? JSON.parse(r.value) : []; }
+  catch { return []; }
 }
 async function saveLog(entry) {
-  try {
-    await fetch('/api/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'saveLog', entry }) });
-  } catch (e) { console.error(e); }
+  try { const logs = await loadLogs(); logs.unshift(entry); await window.storage.set(STORAGE_KEY, JSON.stringify(logs.slice(0, 200)), true); }
+  catch (e) { console.error(e); }
 }
 async function updateLog(id, patch) {
   try {
-    const res = await fetch('/api/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'updateLog', id, patch }) });
-    const data = await res.json();
-    return data.logs || null;
+    const logs = await loadLogs(); const idx = logs.findIndex(l => l.id === id);
+    if (idx !== -1) logs[idx] = { ...logs[idx], ...patch };
+    await window.storage.set(STORAGE_KEY, JSON.stringify(logs), true); return logs;
   } catch (e) { console.error(e); return null; }
 }
 
@@ -83,7 +80,7 @@ const subjectEmoji = sub => SUBJECTS.find(s => s.label === sub)?.emoji || "";
 const subjectBg = sub => SUBJECTS.find(s => s.label === sub)?.bg || "#f9f9f9";
 
 async function callClaude(systemPrompt, userContent) {
-  const res = await fetch("/api/chat", {
+  const res = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST", headers: { "Content-Type": "application/json", "x-api-key": process.env.REACT_APP_ANTHROPIC_API_KEY, "anthropic-version": "2023-06-01" },
     body: JSON.stringify({ model: "claude-sonnet-4-20250514", max_tokens: 1000, system: systemPrompt, messages: [{ role: "user", content: userContent }] }),
   });
@@ -101,7 +98,7 @@ function buildUserContent(grade, subject, question, imageBase64) {
 
 // ── Dog mascot SVG ───────────────────────────────────────────
 function DogFace({ size = 56, mood = "normal" }) {
-  // unused
+  const eyes = mood === "think" ? "^ ^" : mood === "happy" ? "^ω^" : "•ᴗ•";
   return (
     <div style={{ width: size, height: size, borderRadius: "50%", background: "linear-gradient(135deg,#FBBF24,#F59E0B)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: size * 0.52, boxShadow: "0 3px 10px rgba(251,191,36,0.4)", flexShrink: 0, border: "3px solid #fff" }}>
       🐶
@@ -136,6 +133,7 @@ function TeacherLogin({ onLogin }) {
           onKeyDown={e => e.key === "Enter" && check()} />
         {err && <div style={S.errorMsg}>パスワードが違います🐾</div>}
         <button style={S.mainBtn} onClick={check}>ログイン！</button>
+        <div style={{ fontSize: 11, color: "#bbb", marginTop: 14 }}>※ 初期パスワード: home2024</div>
       </div>
     </div>
   );
@@ -207,6 +205,7 @@ function TeacherDashboard({ onClose }) {
                 <div style={{ display: "flex", gap: 5, flexWrap: "wrap" }}>
                   <span style={{ fontSize: 12, fontWeight: "800", padding: "3px 10px", borderRadius: 20, background: subjectBg(log.subject), color: subjectColor(log.subject) }}>{subjectEmoji(log.subject)} {log.subject}</span>
                   <span style={{ fontSize: 12, color: "#888", background: "#F3F4F6", padding: "3px 10px", borderRadius: 20 }}>{log.grade}</span>
+                  {log.studentName && <span style={{ fontSize: 12, color: "#059669", background: "#ECFDF5", padding: "3px 10px", borderRadius: 20, fontWeight: "700" }}>👤 {log.studentName}</span>}
                   {log.hintUsed && <span style={{ fontSize: 11, color: "#7C3AED", background: "#EDE9FE", padding: "3px 10px", borderRadius: 20, fontWeight: "800" }}>💡ヒント</span>}
                   {log.teacherComment && <span style={{ fontSize: 11, color: "#D97706", background: "#FEF3C7", padding: "3px 10px", borderRadius: 20, fontWeight: "800" }}>✏️補足</span>}
                 </div>
@@ -289,6 +288,12 @@ export default function App() {
   const [followUpQuestion, setFollowUpQuestion] = useState("");
   const [followUpMessages, setFollowUpMessages] = useState([]);
   const [followUpLoading, setFollowUpLoading] = useState(false);
+  const [studentName, setStudentName] = useState("");
+  const [showHistory, setShowHistory] = useState(false);
+  const [historyName, setHistoryName] = useState("");
+  const [historyLogs, setHistoryLogs] = useState([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [historySearched, setHistorySearched] = useState(false);
   const [currentLogId, setCurrentLogId] = useState(null);
   const [teacherComment, setTeacherComment] = useState(null);
   const [error, setError] = useState(null);
@@ -330,7 +335,7 @@ export default function App() {
       const text = await callClaude(SYSTEM_PROMPT, buildUserContent(grade, subject, question, imageBase64));
       setAnswer(text);
       const now = new Date();
-      const entry = { id: logId, grade, subject, question: question.trim(), answer: text, hint: hint || "", hintUsed: hintShown, hasImage: !!imageBase64, teacherComment: "", commentedAt: null, time: `${now.getFullYear()}/${now.getMonth()+1}/${now.getDate()} ${now.getHours()}:${String(now.getMinutes()).padStart(2,"0")}` };
+      const entry = { id: logId, grade, subject, studentName: studentName.trim(), question: question.trim(), answer: text, hint: hint || "", hintUsed: hintShown, hasImage: !!imageBase64, teacherComment: "", commentedAt: null, time: `${now.getFullYear()}/${now.getMonth()+1}/${now.getDate()} ${now.getHours()}:${String(now.getMinutes()).padStart(2,"0")}` };
       if (currentLogId) await updateLog(logId, { answer: text });
       else await saveLog(entry);
     } catch { setError("エラーが出たよ。もう一度試してね🐾"); setStep(hintShown ? "hint" : "asking"); }
@@ -383,6 +388,19 @@ export default function App() {
       setFollowUpMessages(prev => [...prev, { role: "assistant", text }]);
     } catch { setFollowUpMessages(prev => [...prev, { role: "assistant", text: "エラーが出たよ。もう一度試してね🐾" }]); }
     finally { setFollowUpLoading(false); }
+  };
+
+
+  const handleSearchHistory = async () => {
+    if (!historyName.trim()) return;
+    setHistoryLoading(true);
+    try {
+      const logs = await loadLogs();
+      const filtered = logs.filter(l => l.studentName && l.studentName.includes(historyName.trim()));
+      setHistoryLogs(filtered);
+      setHistorySearched(true);
+    } catch { setHistoryLogs([]); }
+    finally { setHistoryLoading(false); }
   };
 
   const reset = () => {
