@@ -687,6 +687,57 @@ export default function App() {
       </main>
 
       <style>{`
+        {showHistory && (
+          <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(0,0,0,0.5)", zIndex: 100, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
+            <div style={{ background: "#fff", borderRadius: 20, padding: 24, width: "100%", maxWidth: 480, maxHeight: "80vh", overflowY: "auto" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+                <div style={{ fontSize: 16, fontWeight: "900", color: "#FF6B6B" }}>📋 過去の質問を見る</div>
+                <button onClick={() => { setShowHistory(false); setHistoryName(""); setHistoryLogs([]); setHistorySearched(false); }}
+                  style={{ background: "none", border: "none", fontSize: 20, cursor: "pointer", color: "#aaa" }}>✕</button>
+              </div>
+              <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
+                <input value={historyName} onChange={e => setHistoryName(e.target.value)}
+                  onKeyDown={e => e.key === "Enter" && handleSearchHistory()}
+                  placeholder="なまえを入力して検索"
+                  style={{ flex: 1, padding: "10px 12px", fontSize: 14, border: "2.5px solid #FFE4E4", borderRadius: 12, fontFamily: "inherit", outline: "none" }} />
+                <button onClick={handleSearchHistory} disabled={historyLoading}
+                  style={{ padding: "10px 16px", background: "#FF6B6B", color: "#fff", border: "none", borderRadius: 12, cursor: "pointer", fontWeight: "800", fontSize: 14 }}>
+                  {historyLoading ? "..." : "検索"}
+                </button>
+              </div>
+              {historySearched && historyLogs.length === 0 && (
+                <div style={{ textAlign: "center", padding: 24, color: "#aaa" }}>
+                  <div style={{ fontSize: 32 }}>📭</div>
+                  <div style={{ marginTop: 8 }}>質問が見つからなかったよ</div>
+                </div>
+              )}
+              {historyLogs.map((log, i) => (
+                <div key={i} style={{ background: "#FFF5F5", borderRadius: 14, padding: 14, marginBottom: 10, border: "2px solid #FFE4E4" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
+                    <span style={{ fontSize: 12, fontWeight: "700", color: "#FF6B6B" }}>{log.grade}・{log.subject}</span>
+                    <span style={{ fontSize: 11, color: "#aaa" }}>{log.time}</span>
+                  </div>
+                  <div style={{ fontSize: 13, color: "#555", marginBottom: 8 }}>
+                    {log.hasImage && <span style={{ fontSize: 11, color: "#54A0FF", fontWeight: "700" }}>📷 画像あり　</span>}
+                    {log.question || "（テキストなし）"}
+                  </div>
+                  <div style={{ background: "#FFF0F0", borderRadius: 10, padding: 10, marginBottom: log.teacherComment ? 8 : 0, borderLeft: "3px solid #FF6B6B" }}>
+                    <div style={{ fontSize: 11, fontWeight: "700", color: "#FF6B6B", marginBottom: 4 }}>🐶 勉強犬の解説</div>
+                    <div style={{ fontSize: 12, color: "#555", lineHeight: 1.7 }}>
+                      {log.answer && log.answer.substring(0, 150)}{log.answer && log.answer.length > 150 ? "..." : ""}
+                    </div>
+                  </div>
+                  {log.teacherComment && (
+                    <div style={{ background: "#FFFBEB", borderRadius: 10, padding: 10, border: "2px solid #FCD34D" }}>
+                      <div style={{ fontSize: 11, fontWeight: "700", color: "#D97706", marginBottom: 4 }}>✏️ 先生の補足</div>
+                      <div style={{ fontSize: 12, color: "#555", lineHeight: 1.7 }}>{log.teacherComment}</div>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
         @keyframes bounce { 0%,80%,100%{transform:translateY(0)} 40%{transform:translateY(-7px)} }
         button:active { transform: translateY(2px) !important; }
       `}</style>
