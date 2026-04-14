@@ -136,7 +136,6 @@ function TeacherLogin({ onLogin }) {
           onKeyDown={e => e.key === "Enter" && check()} />
         {err && <div style={S.errorMsg}>パスワードが違います🐾</div>}
         <button style={S.mainBtn} onClick={check}>ログイン！</button>
-        <div style={{ fontSize: 11, color: "#bbb", marginTop: 14 }}>※ 初期パスワード: home2024</div>
       </div>
     </div>
   );
