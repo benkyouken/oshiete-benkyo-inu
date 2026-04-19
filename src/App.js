@@ -380,7 +380,7 @@ export default function App() {
     const objectUrl = URL.createObjectURL(file);
     img.onload = () => {
       const canvas = document.createElement("canvas");
-      const maxSize = 800;
+      const maxSize = 600;
       let w = img.width, h = img.height;
       if (w > maxSize || h > maxSize) {
         if (w > h) { h = Math.round(h * maxSize / w); w = maxSize; }
@@ -388,7 +388,7 @@ export default function App() {
       }
       canvas.width = w; canvas.height = h;
       canvas.getContext("2d").drawImage(img, 0, 0, w, h);
-      const compressed = canvas.toDataURL("image/jpeg", 0.6).split(",")[1];
+      const compressed = canvas.toDataURL("image/jpeg", 0.4).split(",")[1];
       setImageBase64(compressed);
       URL.revokeObjectURL(objectUrl);
     };
