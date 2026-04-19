@@ -270,6 +270,11 @@ function TeacherDashboard({ onClose }) {
                   )}
                 </div>
               )}
+              {isExpanded && log.imageBase64 && (
+                <div style={{ marginTop: 8 }}>
+                  <img src={`data:image/jpeg;base64,${log.imageBase64}`} alt="問題画像" style={{ width: "100%", borderRadius: 12, maxHeight: 300, objectFit: "contain", border: "2px solid #FFE4B5" }} />
+                </div>
+              )}
               <div style={{ fontSize: 11, color: "#ccc", textAlign: "right", marginTop: 8, cursor: "pointer" }} onClick={() => setExpanded(isExpanded ? null : log.id)}>
                 {isExpanded ? "▲ 閉じる" : "▼ 詳細を見る"}
               </div>
@@ -371,9 +376,24 @@ export default function App() {
   const handleImageSelect = useCallback((file) => {
     if (!file) return;
     setImage(URL.createObjectURL(file));
-    const reader = new FileReader();
-    reader.onload = e => setImageBase64(e.target.result.split(",")[1]);
-    reader.readAsDataURL(file); setStep("asking");
+    const img = new Image();
+    const objectUrl = URL.createObjectURL(file);
+    img.onload = () => {
+      const canvas = document.createElement("canvas");
+      const maxSize = 800;
+      let w = img.width, h = img.height;
+      if (w > maxSize || h > maxSize) {
+        if (w > h) { h = Math.round(h * maxSize / w); w = maxSize; }
+        else { w = Math.round(w * maxSize / h); h = maxSize; }
+      }
+      canvas.width = w; canvas.height = h;
+      canvas.getContext("2d").drawImage(img, 0, 0, w, h);
+      const compressed = canvas.toDataURL("image/jpeg", 0.6).split(",")[1];
+      setImageBase64(compressed);
+      URL.revokeObjectURL(objectUrl);
+    };
+    img.src = objectUrl;
+    setStep("asking");
   }, []);
 
   const handleHint = async () => {
@@ -395,7 +415,7 @@ export default function App() {
       const text = await callClaude(SYSTEM_PROMPT, buildUserContent(grade, subject, question, imageBase64));
       setAnswer(text);
       const now = new Date();
-      const entry = { id: logId, grade, subject, studentName: studentName.trim(), question: question.trim(), answer: text, hint: hint || "", hintUsed: hintShown, hasImage: !!imageBase64, teacherComment: "", commentedAt: null, time: `${now.getFullYear()}/${now.getMonth()+1}/${now.getDate()} ${now.getHours()}:${String(now.getMinutes()).padStart(2,"0")}` };
+      const entry = { id: logId, grade, subject, studentName: studentName.trim(), question: question.trim(), answer: text, hint: hint || "", hintUsed: hintShown, hasImage: !!imageBase64, imageBase64: imageBase64 || null, teacherComment: "", commentedAt: null, time: `${now.getFullYear()}/${now.getMonth()+1}/${now.getDate()} ${now.getHours()}:${String(now.getMinutes()).padStart(2,"0")}` };
       if (currentLogId) await updateLog(logId, { answer: text });
       else await saveLog(entry);
     } catch { setError("エラーが出たよ。もう一度試してね🐾"); setStep(hintShown ? "hint" : "asking"); }
