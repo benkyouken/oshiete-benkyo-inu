@@ -1,0 +1,142 @@
+import { useState, useEffect, useCallback } from "react";
+
+async function saveTestResult(entry) {
+  try {
+    await fetch("/api/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "saveTestResult", entry })
+    });
+  } catch (e) { console.error(e); }
+}
+
+export default function QuizEngine({ questions, studentName, grade, subject, onClose, onRetry }) {
+  const [current, setCurrent] = useState(0);
+  const [selected, setSelected] = useState(null);
+  const [score, setScore] = useState(0);
+  const [timeLeft, setTimeLeft] = useState(5);
+  const [answers, setAnswers] = useState([]);
+  const [phase, setPhase] = useState("quiz");
+
+  useEffect(() => {
+    if (phase !== "quiz") return;
+    if (selected !== null) return;
+    setTimeLeft(5);
+    const timer = setInterval(() => {
+      setTimeLeft(t => {
+        if (t <= 1) { clearInterval(timer); handleAnswer(null); return 0; }
+        return t - 1;
+      });
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [current, phase, selected]);
+
+  const handleAnswer = useCallback((choice) => {
+    if (selected !== null) return;
+    const q = questions[current];
+    const isCorrect = choice === q.correct;
+    setSelected(choice || "タイムアウト");
+    if (isCorrect) setScore(s => s + 1);
+    const newAnswers = [...answers, { question: q.question, correct: q.correct, selected: choice, isCorrect }];
+    setAnswers(newAnswers);
+
+    setTimeout(() => {
+      if (current + 1 >= questions.length) {
+        setPhase("result");
+        const finalScore = newAnswers.filter(a => a.isCorrect).length;
+        saveTestResult({
+          id: Date.now(),
+          studentName,
+          grade,
+          subject,
+          score: finalScore,
+          total: questions.length,
+          time: new Date().toLocaleString("ja-JP"),
+        });
+      } else {
+        setCurrent(c => c + 1);
+        setSelected(null);
+      }
+    }, 1000);
+  }, [selected, questions, current, answers, studentName, grade, subject]);
+
+  if (phase === "quiz") {
+    const q = questions[current];
+    return (
+      <div style={{ minHeight: "100vh", background: "#FFF5F5", display: "flex", flexDirection: "column", alignItems: "center", padding: 24, paddingTop: 48 }}>
+        <div style={{ width: "100%", maxWidth: 400 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+            <div style={{ fontSize: 13, color: "#aaa", fontWeight: "700" }}>{current + 1} / {questions.length}</div>
+            <div style={{ fontSize: 28, fontWeight: "900", color: timeLeft <= 2 ? "#EF4444" : "#FF6B6B" }}>{timeLeft}</div>
+          </div>
+          <div style={{ width: "100%", background: "#FFE4E4", borderRadius: 8, height: 8, marginBottom: 32 }}>
+            <div style={{ width: `${(current / questions.length) * 100}%`, background: "#FF6B6B", height: 8, borderRadius: 8, transition: "width 0.3s" }} />
+          </div>
+          <div style={{ background: "#fff", borderRadius: 20, padding: 24, marginBottom: 24, textAlign: "center", boxShadow: "0 2px 12px rgba(255,107,107,0.1)" }}>
+            <div style={{ fontSize: 20, fontWeight: "900", color: "#333" }}>{q.question}</div>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+            {q.choices.map((choice, i) => {
+              let bg = "#fff", border = "2.5px solid #FFE4E4", color = "#333";
+              if (selected !== null) {
+                if (choice === q.correct) { bg = "#D1FAE5"; border = "2.5px solid #10B981"; color = "#065F46"; }
+                else if (choice === selected) { bg = "#FEE2E2"; border = "2.5px solid #EF4444"; color = "#991B1B"; }
+              }
+              return (
+                <button key={i} onClick={() => handleAnswer(choice)} disabled={selected !== null}
+                  style={{ padding: "16px 12px", fontSize: 14, fontWeight: "700", borderRadius: 14, border, background: bg, color, cursor: selected ? "default" : "pointer", transition: "all 0.2s" }}>
+                  {choice}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (phase === "result") {
+    const wrongAnswers = answers.filter(a => !a.isCorrect);
+    const finalScore = answers.filter(a => a.isCorrect).length;
+    return (
+      <div style={{ minHeight: "100vh", background: "#FFF5F5", display: "flex", flexDirection: "column", alignItems: "center", padding: 24, paddingTop: 48 }}>
+        <div style={{ fontSize: 64, marginBottom: 8 }}>{finalScore >= 8 ? "🏆" : finalScore >= 5 ? "🐶" : "😢"}</div>
+        <div style={{ fontSize: 24, fontWeight: "900", color: "#FF6B6B", marginBottom: 4 }}>結果発表！</div>
+        <div style={{ fontSize: 48, fontWeight: "900", color: "#333", marginBottom: 4 }}>{finalScore} <span style={{ fontSize: 20, color: "#aaa" }}>/ {questions.length}</span></div>
+        <div style={{ fontSize: 15, color: "#888", marginBottom: 24 }}>
+          {finalScore >= 8 ? "すごい！完璧に近いわん！🎉" : finalScore >= 5 ? "なかなかやるわん！もう少し！🐾" : "もう一度チャレンジしてみてわん！💪"}
+        </div>
+        {wrongAnswers.length > 0 && (
+          <div style={{ width: "100%", maxWidth: 400, marginBottom: 24 }}>
+            <div style={{ fontSize: 15, fontWeight: "900", color: "#EF4444", marginBottom: 12 }}>❌ 間違えた問題</div>
+            {wrongAnswers.map((a, i) => (
+              <div key={i} style={{ background: "#fff", borderRadius: 14, padding: 16, marginBottom: 10, border: "2px solid #FFE4E4" }}>
+                <div style={{ fontSize: 14, fontWeight: "800", color: "#333", marginBottom: 8 }}>Q. {a.question}</div>
+                <div style={{ fontSize: 13, color: "#EF4444", marginBottom: 4 }}>あなたの答え：{a.selected || "タイムアウト"}</div>
+                <div style={{ fontSize: 13, color: "#10B981", fontWeight: "700" }}>正解：{a.correct}</div>
+              </div>
+            ))}
+          </div>
+        )}
+        <div style={{ width: "100%", maxWidth: 400 }}>
+          {wrongAnswers.length > 0 && (
+            <button onClick={() => onRetry(questions.filter((_, i) => !answers[i]?.isCorrect))}
+              style={{ width: "100%", padding: "16px", fontSize: 16, fontWeight: "900", background: "#EF4444", color: "#fff", border: "none", borderRadius: 16, cursor: "pointer", marginBottom: 12 }}>
+              🔁 間違えた問題だけ再テスト（{wrongAnswers.length}問）
+            </button>
+          )}
+          <button onClick={onClose}
+            style={{ width: "100%", padding: "16px", fontSize: 16, fontWeight: "900", background: "#FF6B6B", color: "#fff", border: "none", borderRadius: 16, cursor: "pointer", marginBottom: 12 }}>
+            🔄 最初からやり直す
+          </button>
+          <button onClick={() => onClose("menu")}
+            style={{ width: "100%", padding: "12px", fontSize: 14, background: "none", border: "none", color: "#aaa", cursor: "pointer" }}>
+            テストメニューにもどる
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return null;
+}

@@ -1,4 +1,4 @@
-import WordTest from './WordTest';
+import TestMenu from './TestMenu';
 import { useState, useRef, useCallback, useEffect } from "react";
 
 const GRADES = [
@@ -497,7 +497,7 @@ export default function App() {
 
   if (mode === "teacherLogin") return <TeacherLogin onLogin={() => setMode("teacherDash")} />;
   if (mode === "teacherDash") return <TeacherDashboard onClose={() => setMode("student")} />;
-  if (mode === "wordTest") return <WordTest onClose={() => setMode("student")} />;
+  if (mode === "wordTest") return <TestMenu onClose={() => setMode("student")} />;
 
   const progressPct = step === "select" ? 15 : step === "camera" ? 35 : step === "asking" ? 55 : step === "hint" ? 75 : 100;
 
