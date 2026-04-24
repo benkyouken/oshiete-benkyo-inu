@@ -22,17 +22,18 @@ function renderWithRuby(text) {
 }
 
 export default function QuizEngine({ questions, studentName, grade, subject, onClose, onRetry }) {
+  const timeLimit = ["言葉集め", "理科", "社会"].includes(subject) ? 10 : 5;
   const [current, setCurrent] = useState(0);
   const [selected, setSelected] = useState(null);
   const [score, setScore] = useState(0);
-  const [timeLeft, setTimeLeft] = useState(5);
+  const [timeLeft, setTimeLeft] = useState(timeLimit);
   const [answers, setAnswers] = useState([]);
   const [phase, setPhase] = useState("quiz");
 
   useEffect(() => {
     if (phase !== "quiz") return;
     if (selected !== null) return;
-    setTimeLeft(5);
+    setTimeLeft(timeLimit);
     const timer = setInterval(() => {
       setTimeLeft(t => {
         if (t <= 1) { clearInterval(timer); handleAnswer(null); return 0; }
