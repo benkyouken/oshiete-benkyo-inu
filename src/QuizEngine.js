@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 
 async function saveTestResult(entry) {
   try {
@@ -110,45 +110,173 @@ export default function QuizEngine({ questions, studentName, grade, subject, onC
   if (phase === "result") {
     const wrongAnswers = answers.filter(a => !a.isCorrect);
     const finalScore = answers.filter(a => a.isCorrect).length;
-    return (
-      <div style={{ minHeight: "100vh", background: "#FFF5F5", display: "flex", flexDirection: "column", alignItems: "center", padding: 24, paddingTop: 48 }}>
-        <div style={{ fontSize: 64, marginBottom: 8 }}>{finalScore >= 8 ? "🏆" : finalScore >= 5 ? "🐶" : "😢"}</div>
-        <div style={{ fontSize: 24, fontWeight: "900", color: "#FF6B6B", marginBottom: 4 }}>結果発表！</div>
-        <div style={{ fontSize: 48, fontWeight: "900", color: "#333", marginBottom: 4 }}>{finalScore} <span style={{ fontSize: 20, color: "#aaa" }}>/ {questions.length}</span></div>
-        <div style={{ fontSize: 15, color: "#888", marginBottom: 24 }}>
+    return <ResultWithChat
+      wrongAnswers={wrongAnswers}
+      finalScore={finalScore}
+      total={questions.length}
+      questions={questions}
+      answers={answers}
+      subject={subject}
+      grade={grade}
+      onRetry={onRetry}
+      onClose={onClose}
+    />;
+  }
+
+  return null;
+}
+
+function ResultWithChat({ wrongAnswers, finalScore, total, questions, answers, subject, grade, onRetry, onClose }) {
+  const [explanations, setExplanations] = useState({});
+  const [loadingIdx, setLoadingIdx] = useState(null);
+  const [chatMessages, setChatMessages] = useState([]);
+  const [chatInput, setChatInput] = useState("");
+  const [chatLoading, setChatLoading] = useState(false);
+  const chatBottomRef = useRef(null);
+
+  useEffect(() => {
+    chatBottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [chatMessages]);
+
+  const getExplanation = async (a, i) => {
+    setLoadingIdx(i);
+    try {
+      const res = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: "claude-sonnet-4-20250514",
+          max_tokens: 1000,
+          system: `あなたは「勉強犬」という名前の元気でやさしい犬の家庭教師です。語尾に「わん」「だよ」など犬らしさを自然に混ぜてください。${grade}の生徒に分かりやすく説明してください。`,
+          messages: [{
+            role: "user",
+            content: `${subject}のテストでこの問題を間違えました。分かりやすく解説してください。
+問題：${a.question}
+正解：${a.correct}
+私の答え：${a.selected || "タイムアウト"}`
+          }]
+        })
+      });
+      const data = await res.json();
+      const text = data.content?.map(b => b.text || "").join("") || "";
+      setExplanations(prev => ({ ...prev, [i]: text }));
+    } catch (e) {
+      setExplanations(prev => ({ ...prev, [i]: "解説の取得に失敗しました🐾" }));
+    }
+    setLoadingIdx(null);
+  };
+
+  const sendChat = async () => {
+    if (!chatInput.trim()) return;
+    const userMsg = chatInput.trim();
+    setChatInput("");
+    const newMessages = [...chatMessages, { role: "user", content: userMsg }];
+    setChatMessages(newMessages);
+    setChatLoading(true);
+    try {
+      const res = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: "claude-sonnet-4-20250514",
+          max_tokens: 1000,
+          system: `あなたは「勉強犬」という名前の元気でやさしい犬の家庭教師です。語尾に「わん」「だよ」など犬らしさを自然に混ぜてください。${grade}の${subject}のテスト結果について質問を受けています。`,
+          messages: newMessages
+        })
+      });
+      const data = await res.json();
+      const text = data.content?.map(b => b.text || "").join("") || "";
+      setChatMessages([...newMessages, { role: "assistant", content: text }]);
+    } catch (e) {
+      setChatMessages([...newMessages, { role: "assistant", content: "エラーが出たよ。もう一度試してね🐾" }]);
+    }
+    setChatLoading(false);
+  };
+
+  return (
+    <div style={{ minHeight: "100vh", background: "#FFF5F5", display: "flex", flexDirection: "column", alignItems: "center", padding: 24, paddingTop: 48 }}>
+      <div style={{ width: "100%", maxWidth: 440 }}>
+        <div style={{ fontSize: 64, marginBottom: 8, textAlign: "center" }}>{finalScore >= 8 ? "🏆" : finalScore >= 5 ? "🐶" : "😢"}</div>
+        <div style={{ fontSize: 24, fontWeight: "900", color: "#FF6B6B", marginBottom: 4, textAlign: "center" }}>結果発表！</div>
+        <div style={{ fontSize: 48, fontWeight: "900", color: "#333", marginBottom: 4, textAlign: "center" }}>{finalScore} <span style={{ fontSize: 20, color: "#aaa" }}>/ {total}</span></div>
+        <div style={{ fontSize: 15, color: "#888", marginBottom: 24, textAlign: "center" }}>
           {finalScore >= 8 ? "すごい！完璧に近いわん！🎉" : finalScore >= 5 ? "なかなかやるわん！もう少し！🐾" : "もう一度チャレンジしてみてわん！💪"}
         </div>
+
         {wrongAnswers.length > 0 && (
-          <div style={{ width: "100%", maxWidth: 400, marginBottom: 24 }}>
+          <div style={{ marginBottom: 24 }}>
             <div style={{ fontSize: 15, fontWeight: "900", color: "#EF4444", marginBottom: 12 }}>❌ 間違えた問題</div>
             {wrongAnswers.map((a, i) => (
               <div key={i} style={{ background: "#fff", borderRadius: 14, padding: 16, marginBottom: 10, border: "2px solid #FFE4E4" }}>
                 <div style={{ fontSize: 14, fontWeight: "800", color: "#333", marginBottom: 8 }}>Q. {a.question}</div>
                 <div style={{ fontSize: 13, color: "#EF4444", marginBottom: 4 }}>あなたの答え：{a.selected || "タイムアウト"}</div>
-                <div style={{ fontSize: 13, color: "#10B981", fontWeight: "700" }}>正解：{a.correct}</div>
+                <div style={{ fontSize: 13, color: "#10B981", fontWeight: "700", marginBottom: 12 }}>正解：{a.correct}</div>
+                {!explanations[i] && (
+                  <button onClick={() => getExplanation(a, i)} disabled={loadingIdx === i}
+                    style={{ width: "100%", padding: "10px", fontSize: 13, fontWeight: "800", background: "#FFF5F5", color: "#FF6B6B", border: "2px solid #FFE4E4", borderRadius: 10, cursor: "pointer" }}>
+                    {loadingIdx === i ? "解説を取得中..." : "🐶 解説してもらう"}
+                  </button>
+                )}
+                {explanations[i] && (
+                  <div style={{ background: "#FFF5F5", borderRadius: 10, padding: 12, border: "2px solid #FFE4E4", marginTop: 8 }}>
+                    <div style={{ fontSize: 12, fontWeight: "800", color: "#FF6B6B", marginBottom: 6 }}>🐶 勉強犬の解説</div>
+                    {explanations[i].split("
+").map((l, j) => <p key={j} style={{ margin: "2px 0", fontSize: 13, color: "#444" }}>{l}</p>)}
+                  </div>
+                )}
               </div>
             ))}
           </div>
         )}
-        <div style={{ width: "100%", maxWidth: 400 }}>
-          {wrongAnswers.length > 0 && (
-            <button onClick={() => onRetry(questions.filter((_, i) => !answers[i]?.isCorrect))}
-              style={{ width: "100%", padding: "16px", fontSize: 16, fontWeight: "900", background: "#EF4444", color: "#fff", border: "none", borderRadius: 16, cursor: "pointer", marginBottom: 12 }}>
-              🔁 間違えた問題だけ再テスト（{wrongAnswers.length}問）
-            </button>
-          )}
-          <button onClick={onClose}
-            style={{ width: "100%", padding: "16px", fontSize: 16, fontWeight: "900", background: "#FF6B6B", color: "#fff", border: "none", borderRadius: 16, cursor: "pointer", marginBottom: 12 }}>
-            🔄 最初からやり直す
-          </button>
-          <button onClick={() => onClose("menu")}
-            style={{ width: "100%", padding: "12px", fontSize: 14, background: "none", border: "none", color: "#aaa", cursor: "pointer" }}>
-            テストメニューにもどる
-          </button>
-        </div>
-      </div>
-    );
-  }
 
-  return null;
+        {/* 自由質問チャット */}
+        <div style={{ background: "#fff", borderRadius: 16, padding: 16, border: "2px solid #FFE4E4", marginBottom: 24 }}>
+          <div style={{ fontSize: 14, fontWeight: "900", color: "#FF6B6B", marginBottom: 12 }}>💬 勉強犬に質問する</div>
+          {chatMessages.length > 0 && (
+            <div style={{ marginBottom: 12, maxHeight: 300, overflowY: "auto" }}>
+              {chatMessages.map((m, i) => (
+                <div key={i} style={{ marginBottom: 10, display: "flex", justifyContent: m.role === "user" ? "flex-end" : "flex-start" }}>
+                  <div style={{ maxWidth: "80%", padding: "10px 14px", borderRadius: m.role === "user" ? "16px 16px 4px 16px" : "16px 16px 16px 4px", background: m.role === "user" ? "#FF6B6B" : "#FFF5F5", color: m.role === "user" ? "#fff" : "#333", fontSize: 13, border: m.role === "assistant" ? "2px solid #FFE4E4" : "none" }}>
+                    {m.content.split("
+").map((l, j) => <p key={j} style={{ margin: "2px 0" }}>{l}</p>)}
+                  </div>
+                </div>
+              ))}
+              {chatLoading && (
+                <div style={{ display: "flex", justifyContent: "flex-start" }}>
+                  <div style={{ padding: "10px 14px", borderRadius: "16px 16px 16px 4px", background: "#FFF5F5", border: "2px solid #FFE4E4", fontSize: 13, color: "#aaa" }}>考え中...🐶</div>
+                </div>
+              )}
+              <div ref={chatBottomRef} />
+            </div>
+          )}
+          <div style={{ display: "flex", gap: 8 }}>
+            <input value={chatInput} onChange={e => setChatInput(e.target.value)}
+              onKeyDown={e => e.key === "Enter" && sendChat()}
+              placeholder="質問を入力してね🐾"
+              style={{ flex: 1, padding: "10px 12px", fontSize: 13, border: "2px solid #FFE4E4", borderRadius: 12, fontFamily: "inherit", outline: "none" }} />
+            <button onClick={sendChat} disabled={chatLoading || !chatInput.trim()}
+              style={{ padding: "10px 16px", background: "#FF6B6B", color: "#fff", border: "none", borderRadius: 12, cursor: "pointer", fontWeight: "800", fontSize: 13 }}>
+              送信
+            </button>
+          </div>
+        </div>
+
+        {wrongAnswers.length > 0 && (
+          <button onClick={() => onRetry(questions.filter((_, i) => !answers[i]?.isCorrect))}
+            style={{ width: "100%", padding: "16px", fontSize: 16, fontWeight: "900", background: "#EF4444", color: "#fff", border: "none", borderRadius: 16, cursor: "pointer", marginBottom: 12 }}>
+            🔁 間違えた問題だけ再テスト（{wrongAnswers.length}問）
+          </button>
+        )}
+        <button onClick={onClose}
+          style={{ width: "100%", padding: "16px", fontSize: 16, fontWeight: "900", background: "#FF6B6B", color: "#fff", border: "none", borderRadius: 16, cursor: "pointer", marginBottom: 12 }}>
+          🔄 最初からやり直す
+        </button>
+        <button onClick={() => onClose("menu")}
+          style={{ width: "100%", padding: "12px", fontSize: 14, background: "none", border: "none", color: "#aaa", cursor: "pointer" }}>
+          テストメニューにもどる
+        </button>
+      </div>
+    </div>
+  );
 }
