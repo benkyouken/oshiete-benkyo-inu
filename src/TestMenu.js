@@ -128,7 +128,7 @@ export default function TestMenu({ onClose }) {
     <div style={{ minHeight: "100vh", background: "#FFF5F5", padding: 24, paddingTop: 48 }}>
       <div style={{ maxWidth: 440, margin: "0 auto" }}>
         <div style={{ fontSize: 22, fontWeight: "900", color: "#FF6B6B", marginBottom: 4, textAlign: "center" }}>📝 テスト</div>
-        <div style={{ fontSize: 13, color: "#aaa", marginBottom: 32, textAlign: "center" }}>10問・1問5秒勝負！</div>
+        <div style={{ fontSize: 13, color: "#aaa", marginBottom: 32, textAlign: "center" }}>10問・4択クイズ！</div>
 
         {/* なまえ */}
         <div style={{ fontSize: 13, fontWeight: "700", color: "#888", marginBottom: 8 }}>なまえ（省略OK）</div>
