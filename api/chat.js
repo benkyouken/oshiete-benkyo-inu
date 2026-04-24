@@ -57,6 +57,25 @@ export default async function handler(req, res) {
     return;
   }
 
+  if (action === 'saveTestResult') {
+    try {
+      const { entry } = req.body;
+      const results = await redis.get('test-results') || [];
+      results.unshift(entry);
+      await redis.set('test-results', results.slice(0, 500));
+      res.status(200).json({ ok: true });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+    return;
+  }
+
+  if (action === 'getTestResults') {
+    try {
+      const results = await redis.get('test-results') || [];
+      res.status(200).json({ results });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+    return;
+  }
+
   if (action === 'updateLog') {
     try {
       const { id, patch } = req.body;

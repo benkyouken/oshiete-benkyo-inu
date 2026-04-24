@@ -1,3 +1,4 @@
+import WordTest from './WordTest';
 import { useState, useRef, useCallback, useEffect } from "react";
 
 const GRADES = [
@@ -496,6 +497,7 @@ export default function App() {
 
   if (mode === "teacherLogin") return <TeacherLogin onLogin={() => setMode("teacherDash")} />;
   if (mode === "teacherDash") return <TeacherDashboard onClose={() => setMode("student")} />;
+  if (mode === "wordTest") return <WordTest onClose={() => setMode("student")} />;
 
   const progressPct = step === "select" ? 15 : step === "camera" ? 35 : step === "asking" ? 55 : step === "hint" ? 75 : 100;
 
@@ -515,6 +517,7 @@ export default function App() {
             {step !== "select" && <button onClick={reset} style={S.chipBtn}>🔄 最初から</button>}
             <button onClick={() => setShowHistory(true)} style={{ ...S.chipBtn, color: "#059669", background: "#ECFDF5" }}>📋 履歴</button>
             <button onClick={() => setMode("teacherLogin")} style={{ ...S.chipBtn, color: "#D97706", background: "#FEF3C7", border: "2px solid #FCD34D" }}>先生🔐</button>
+            <button onClick={() => setMode("wordTest")} style={{ ...S.chipBtn, color: "#7C3AED", background: "#F5F3FF", border: "2px solid #DDD6FE" }}>📝 テスト</button>
           </div>
         </div>
         {/* Progress paw prints */}
