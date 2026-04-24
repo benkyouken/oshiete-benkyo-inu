@@ -22,7 +22,7 @@ function renderWithRuby(text) {
 }
 
 export default function QuizEngine({ questions, studentName, grade, subject, onClose, onRetry }) {
-  const timeLimit = ["言葉集め", "理科", "社会"].includes(subject) ? 10 : 5;
+  const timeLimit = ["言葉集め", "理科", "社会", "キーワード"].includes(subject) ? 10 : 5;
   const [current, setCurrent] = useState(0);
   const [selected, setSelected] = useState(null);
   const [score, setScore] = useState(0);
@@ -266,9 +266,9 @@ function ResultWithChat({ wrongAnswers, finalScore, total, questions, answers, s
             🔁 間違えた問題だけ再テスト（{wrongAnswers.length}問）
           </button>
         )}
-        <button onClick={onClose}
+        <button onClick={() => onRetry(questions)}
           style={{ width: "100%", padding: "16px", fontSize: 16, fontWeight: "900", background: "#FF6B6B", color: "#fff", border: "none", borderRadius: 16, cursor: "pointer", marginBottom: 12 }}>
-          🔄 最初からやり直す
+          🔄 同じ問題を繰り返す
         </button>
         <button onClick={() => onClose("menu")}
           style={{ width: "100%", padding: "12px", fontSize: 14, background: "none", border: "none", color: "#aaa", cursor: "pointer" }}>
