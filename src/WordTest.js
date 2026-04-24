@@ -192,22 +192,54 @@ export default function WordTest({ onClose }) {
     );
   }
 
-  if (phase === "result") return (
-    <div style={{ minHeight: "100vh", background: "#FFF5F5", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 24 }}>
-      <div style={{ fontSize: 64, marginBottom: 8 }}>{score >= 8 ? "🏆" : score >= 5 ? "🐶" : "😢"}</div>
-      <div style={{ fontSize: 24, fontWeight: "900", color: "#FF6B6B", marginBottom: 4 }}>結果発表！</div>
-      <div style={{ fontSize: 48, fontWeight: "900", color: "#333", marginBottom: 4 }}>{score} <span style={{ fontSize: 20, color: "#aaa" }}>/ {questions.length}</span></div>
-      <div style={{ fontSize: 15, color: "#888", marginBottom: 32 }}>
-        {score >= 8 ? "すごい！完璧に近いわん！🎉" : score >= 5 ? "なかなかやるわん！もう少し！🐾" : "もう一度チャレンジしてみてわん！💪"}
+  if (phase === "result") {
+    const wrongAnswers = answers.filter(a => !a.isCorrect);
+    return (
+      <div style={{ minHeight: "100vh", background: "#FFF5F5", display: "flex", flexDirection: "column", alignItems: "center", padding: 24, paddingTop: 48 }}>
+        <div style={{ fontSize: 64, marginBottom: 8 }}>{score >= 8 ? "🏆" : score >= 5 ? "🐶" : "😢"}</div>
+        <div style={{ fontSize: 24, fontWeight: "900", color: "#FF6B6B", marginBottom: 4 }}>結果発表！</div>
+        <div style={{ fontSize: 48, fontWeight: "900", color: "#333", marginBottom: 4 }}>{score} <span style={{ fontSize: 20, color: "#aaa" }}>/ {questions.length}</span></div>
+        <div style={{ fontSize: 15, color: "#888", marginBottom: 24 }}>
+          {score >= 8 ? "すごい！完璧に近いわん！🎉" : score >= 5 ? "なかなかやるわん！もう少し！🐾" : "もう一度チャレンジしてみてわん！💪"}
+        </div>
+
+        {wrongAnswers.length > 0 && (
+          <div style={{ width: "100%", maxWidth: 400, marginBottom: 24 }}>
+            <div style={{ fontSize: 15, fontWeight: "900", color: "#EF4444", marginBottom: 12 }}>❌ 間違えた問題</div>
+            {wrongAnswers.map((a, i) => (
+              <div key={i} style={{ background: "#fff", borderRadius: 14, padding: 16, marginBottom: 10, border: "2px solid #FFE4E4" }}>
+                <div style={{ fontSize: 14, fontWeight: "800", color: "#333", marginBottom: 8 }}>Q. {a.question}</div>
+                <div style={{ fontSize: 13, color: "#EF4444", marginBottom: 4 }}>あなたの答え：{a.selected || "タイムアウト"}</div>
+                <div style={{ fontSize: 13, color: "#10B981", fontWeight: "700" }}>正解：{a.correct}</div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <div style={{ width: "100%", maxWidth: 400 }}>
+          {wrongAnswers.length > 0 && (
+            <button onClick={() => {
+              const retryQs = questions.filter((_, i) => !answers[i]?.isCorrect);
+              setQuestions(retryQs);
+              setCurrent(0);
+              setScore(0);
+              setAnswers([]);
+              setSelected(null);
+              setPhase("quiz");
+            }} style={{ width: "100%", padding: "16px", fontSize: 16, fontWeight: "900", background: "#EF4444", color: "#fff", border: "none", borderRadius: 16, cursor: "pointer", marginBottom: 12 }}>
+              🔁 間違えた問題だけ再テスト（{wrongAnswers.length}問）
+            </button>
+          )}
+          <button onClick={() => { setPhase("select"); setGrade(""); }} style={{ width: "100%", padding: "16px", fontSize: 16, fontWeight: "900", background: "#FF6B6B", color: "#fff", border: "none", borderRadius: 16, cursor: "pointer", marginBottom: 12 }}>
+            🔄 もう一度やる
+          </button>
+          <button onClick={onClose} style={{ width: "100%", padding: "12px", fontSize: 14, background: "none", border: "none", color: "#aaa", cursor: "pointer" }}>
+            もどる
+          </button>
+        </div>
       </div>
-      <button onClick={() => { setPhase("select"); setGrade(""); }} style={{ width: "100%", maxWidth: 360, padding: "16px", fontSize: 16, fontWeight: "900", background: "#FF6B6B", color: "#fff", border: "none", borderRadius: 16, cursor: "pointer", marginBottom: 12 }}>
-        🔄 もう一度やる
-      </button>
-      <button onClick={onClose} style={{ width: "100%", maxWidth: 360, padding: "12px", fontSize: 14, background: "none", border: "none", color: "#aaa", cursor: "pointer" }}>
-        もどる
-      </button>
-    </div>
-  );
+    );
+  }
 
   return null;
 }
