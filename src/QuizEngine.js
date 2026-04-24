@@ -220,8 +220,7 @@ function ResultWithChat({ wrongAnswers, finalScore, total, questions, answers, s
                 {explanations[i] && (
                   <div style={{ background: "#FFF5F5", borderRadius: 10, padding: 12, border: "2px solid #FFE4E4", marginTop: 8 }}>
                     <div style={{ fontSize: 12, fontWeight: "800", color: "#FF6B6B", marginBottom: 6 }}>🐶 勉強犬の解説</div>
-                    {explanations[i].split("
-").map((l, j) => <p key={j} style={{ margin: "2px 0", fontSize: 13, color: "#444" }}>{l}</p>)}
+                    {explanations[i].split("\n").map((l, j) => <p key={j} style={{ margin: "2px 0", fontSize: 13, color: "#444" }}>{l}</p>)}
                   </div>
                 )}
               </div>
@@ -237,8 +236,7 @@ function ResultWithChat({ wrongAnswers, finalScore, total, questions, answers, s
               {chatMessages.map((m, i) => (
                 <div key={i} style={{ marginBottom: 10, display: "flex", justifyContent: m.role === "user" ? "flex-end" : "flex-start" }}>
                   <div style={{ maxWidth: "80%", padding: "10px 14px", borderRadius: m.role === "user" ? "16px 16px 4px 16px" : "16px 16px 16px 4px", background: m.role === "user" ? "#FF6B6B" : "#FFF5F5", color: m.role === "user" ? "#fff" : "#333", fontSize: 13, border: m.role === "assistant" ? "2px solid #FFE4E4" : "none" }}>
-                    {m.content.split("
-").map((l, j) => <p key={j} style={{ margin: "2px 0" }}>{l}</p>)}
+                    {m.content.split("\n").map((l, j) => <p key={j} style={{ margin: "2px 0" }}>{l}</p>)}
                   </div>
                 </div>
               ))}
