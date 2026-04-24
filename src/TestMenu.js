@@ -2,7 +2,7 @@ import { useState } from "react";
 import { SUBJECTS, SCIENCE_UNITS, SOCIAL_UNITS, GRADES_ALL, GRADES_MID_HIGH } from "./testData";
 import QuizEngine from "./QuizEngine";
 
-async function generateQuestions(subject, grade, units, keywords) {
+async function generateQuestions(subject, grade, units, keywords, difficulty) {
   let prompt = "";
   if (subject === "english") {
     prompt = `${grade}レベルの英単語テスト問題を10問作成してください。日本語→英語問題5問、英語→日本語問題5問をランダムに混ぜてください。`;
@@ -13,11 +13,14 @@ async function generateQuestions(subject, grade, units, keywords) {
   } else if (subject === "kanji") {
     prompt = `${grade}で習う漢字の読み方テスト問題を10問作成してください。漢字の読み方を問う4択問題にしてください。`;
   } else if (subject === "science") {
-    prompt = `${grade}の理科「${units.join("・")}」の単元からテスト問題を10問作成してください。`;
+    const diffText = difficulty === "easy" ? "基本的な" : difficulty === "hard" ? "発展的な" : "標準的な";
+    prompt = `${grade}の理科「${units.join("・")}」の単元から${diffText}テスト問題を10問作成してください。`;
   } else if (subject === "social") {
-    prompt = `${grade}の社会「${units.join("・")}」の単元からテスト問題を10問作成してください。`;
+    const diffText = difficulty === "easy" ? "基本的な" : difficulty === "hard" ? "発展的な" : "標準的な";
+    prompt = `${grade}の社会「${units.join("・")}」の単元から${diffText}テスト問題を10問作成してください。`;
   } else if (subject === "keyword") {
-    prompt = `${grade}レベルで「${keywords.join("・")}」に関するテスト問題を10問作成してください。`;
+    const diffText = difficulty === "easy" ? "基本的な" : difficulty === "hard" ? "発展的な" : "標準的な";
+    prompt = `${grade}レベルで「${keywords.join("・")}」に関する${diffText}テスト問題を10問作成してください。`;
   }
 
   const res = await fetch("/api/chat", {
@@ -54,6 +57,7 @@ export default function TestMenu({ onClose }) {
   const [grade, setGrade] = useState("");
   const [selectedUnits, setSelectedUnits] = useState([]);
   const [keywords, setKeywords] = useState("");
+  const [difficulty, setDifficulty] = useState("");
   const [studentName, setStudentName] = useState("");
   const [loading, setLoading] = useState(false);
   const [questions, setQuestions] = useState([]);
@@ -95,9 +99,11 @@ export default function TestMenu({ onClose }) {
 
   const needsUnits = subject === "science" || subject === "social";
   const needsKeywords = subject === "keyword";
+  const needsDifficulty = subject === "science" || subject === "social" || subject === "keyword";
   const canStart = subject && grade && 
     (!needsUnits || selectedUnits.length > 0) && 
-    (!needsKeywords || keywords.trim().length > 0);
+    (!needsKeywords || keywords.trim().length > 0) &&
+    (!needsDifficulty || difficulty !== "");
 
   if (phase === "quiz") return (
     <QuizEngine
@@ -179,6 +185,21 @@ export default function TestMenu({ onClose }) {
             <textarea value={keywords} onChange={e => setKeywords(e.target.value)}
               placeholder="例：光合成, 蒸散, 葉緑体"
               style={{ width: "100%", padding: "12px", fontSize: 14, border: "2.5px solid #FFE4E4", borderRadius: 12, fontFamily: "inherit", outline: "none", boxSizing: "border-box", resize: "vertical", height: 100, marginBottom: 24 }} />
+          </>
+        )}
+
+        {/* 難易度選択（理科・社会・キーワード） */}
+        {needsDifficulty && grade && (subject !== "keyword" || keywords.trim().length > 0) && (subject !== "science" || selectedUnits.length > 0) && (subject !== "social" || selectedUnits.length > 0) && (
+          <>
+            <div style={{ fontSize: 13, fontWeight: "700", color: "#888", marginBottom: 8 }}>難易度を選んでね</div>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8, marginBottom: 24 }}>
+              {[{ id: "easy", label: "やさしい", emoji: "😊" }, { id: "normal", label: "ふつう", emoji: "🐶" }, { id: "hard", label: "むずかしい", emoji: "🔥" }].map(d => (
+                <button key={d.id} onClick={() => setDifficulty(d.id)}
+                  style={{ padding: "12px 4px", fontSize: 13, fontWeight: "800", borderRadius: 12, border: difficulty === d.id ? "3px solid #FF6B6B" : "2.5px solid #FFE4E4", background: difficulty === d.id ? "#FF6B6B" : "#fff", color: difficulty === d.id ? "#fff" : "#FF6B6B", cursor: "pointer" }}>
+                  {d.emoji} {d.label}
+                </button>
+              ))}
+            </div>
           </>
         )}
 
