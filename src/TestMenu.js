@@ -97,6 +97,7 @@ export default function TestMenu({ onClose }) {
     setLoading(false);
   };
 
+  const gradeLabel = subject === "social" ? "教科を選んでね" : "学年を選んでね";
   const needsUnits = subject === "science" || subject === "social";
   const needsKeywords = subject === "keyword";
   const needsDifficulty = subject === "science" || subject === "social" || subject === "keyword";
@@ -149,8 +150,8 @@ export default function TestMenu({ onClose }) {
         {/* 学年選択 */}
         {subject && (
           <>
-            <div style={{ fontSize: 13, fontWeight: "700", color: "#888", marginBottom: 8 }}>学年を選んでね</div>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8, marginBottom: 24 }}>
+            <div style={{ fontSize: 13, fontWeight: "700", color: "#888", marginBottom: 8 }}>{gradeLabel}</div>
+            <div style={{ display: "grid", gridTemplateColumns: subject === "social" ? "1fr" : "repeat(3, 1fr)", gap: 8, marginBottom: 24 }}>
               {getGrades().map(g => (
                 <button key={g} onClick={() => { setGrade(g); setSelectedUnits([]); }}
                   style={{ padding: "12px 0", fontSize: 13, fontWeight: "800", borderRadius: 12, border: grade === g ? "3px solid #FF6B6B" : "2.5px solid #FFE4E4", background: grade === g ? "#FF6B6B" : "#fff", color: grade === g ? "#fff" : "#FF6B6B", cursor: "pointer" }}>
