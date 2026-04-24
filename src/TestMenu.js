@@ -7,7 +7,9 @@ async function generateQuestions(subject, grade, units, keywords) {
   if (subject === "english") {
     prompt = `${grade}レベルの英単語テスト問題を10問作成してください。日本語→英語問題5問、英語→日本語問題5問をランダムに混ぜてください。`;
   } else if (subject === "vocab") {
-    prompt = `${grade}レベルの語彙・言葉の意味テスト問題を10問作成してください。言葉の意味を問う4択問題にしてください。`;
+    prompt = `${grade}レベルの語彙・言葉の意味テスト問題を10問作成してください。言葉の意味を問う4択問題にしてください。
+問題文と選択肢の漢字には必ずふりがなをつけてください。
+ふりがなは {漢字|ふりがな} の形式で書いてください。例：{綺麗|きれい}な{花|はな}`;
   } else if (subject === "kanji") {
     prompt = `${grade}で習う漢字の読み方テスト問題を10問作成してください。漢字の読み方を問う4択問題にしてください。`;
   } else if (subject === "science") {

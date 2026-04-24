@@ -10,6 +10,17 @@ async function saveTestResult(entry) {
   } catch (e) { console.error(e); }
 }
 
+function renderWithRuby(text) {
+  if (!text || typeof text !== "string") return text;
+  // {漢字|ふりがな} 形式をrubyタグに変換
+  const parts = text.split(/(\{[^}]+\|[^}]+\})/);
+  return parts.map((part, i) => {
+    const match = part.match(/\{([^|]+)\|([^}]+)\}/);
+    if (match) return <ruby key={i}>{match[1]}<rt>{match[2]}</rt></ruby>;
+    return part;
+  });
+}
+
 export default function QuizEngine({ questions, studentName, grade, subject, onClose, onRetry }) {
   const [current, setCurrent] = useState(0);
   const [selected, setSelected] = useState(null);
@@ -73,7 +84,7 @@ export default function QuizEngine({ questions, studentName, grade, subject, onC
             <div style={{ width: `${(current / questions.length) * 100}%`, background: "#FF6B6B", height: 8, borderRadius: 8, transition: "width 0.3s" }} />
           </div>
           <div style={{ background: "#fff", borderRadius: 20, padding: 24, marginBottom: 24, textAlign: "center", boxShadow: "0 2px 12px rgba(255,107,107,0.1)" }}>
-            <div style={{ fontSize: 20, fontWeight: "900", color: "#333" }}>{q.question}</div>
+            <div style={{ fontSize: 20, fontWeight: "900", color: "#333" }}>{renderWithRuby(q.question)}</div>
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
             {q.choices.map((choice, i) => {
@@ -85,7 +96,7 @@ export default function QuizEngine({ questions, studentName, grade, subject, onC
               return (
                 <button key={i} onClick={() => handleAnswer(choice)} disabled={selected !== null}
                   style={{ padding: "16px 12px", fontSize: 14, fontWeight: "700", borderRadius: 14, border, background: bg, color, cursor: selected ? "default" : "pointer", transition: "all 0.2s" }}>
-                  {choice}
+                  {renderWithRuby(choice)}
                 </button>
               );
             })}
