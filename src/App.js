@@ -221,7 +221,7 @@ function TeacherDashboard({ onClose }) {
             )}
           </div>
         )}
-        {tab === "questions" && (<div>
+        {tab === "questions" && (<div><div>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
           {[{ num: logs.length, label: "総質問数", color: "#FF6B6B" }, { num: logs.filter(l => l.hintUsed).length, label: "💡ヒント使用", color: "#8B5CF6" }, { num: logs.filter(l => l.teacherComment).length, label: "✏️補足済み", color: "#F59E0B" }]
             .map(({ num, label, color }) => (
@@ -587,7 +587,7 @@ export default function App() {
             )}
           </div>
         )}
-        {tab === "questions" && (<div>
+        {tab === "questions" && (<div><div>
 
         {/* ── Hero banner (select only) ── */}
         {step === "select" && (
