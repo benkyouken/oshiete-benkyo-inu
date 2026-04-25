@@ -1,4 +1,5 @@
 import TestMenu from './TestMenu';
+import ThinkingTest from './ThinkingTest';
 import CalcTest from './CalcTest';
 import { useState, useRef, useCallback, useEffect } from "react";
 
@@ -500,6 +501,7 @@ export default function App() {
   if (mode === "teacherDash") return <TeacherDashboard onClose={() => setMode("student")} />;
   if (mode === "wordTest") return <TestMenu onClose={() => setMode("student")} />;
   if (mode === "calcTest") return <CalcTest onClose={() => setMode("student")} />;
+  if (mode === "thinkingTest") return <ThinkingTest onClose={() => setMode("student")} />;
 
   const progressPct = step === "select" ? 15 : step === "camera" ? 35 : step === "asking" ? 55 : step === "hint" ? 75 : 100;
 
@@ -520,6 +522,7 @@ export default function App() {
             <button onClick={() => setShowHistory(true)} style={{ ...S.chipBtn, color: "#059669", background: "#ECFDF5" }}>📋 履歴</button>
             <button onClick={() => setMode("teacherLogin")} style={{ ...S.chipBtn, color: "#D97706", background: "#FEF3C7", border: "2px solid #FCD34D" }}>先生🔐</button>
             <button onClick={() => setMode("wordTest")} style={{ ...S.chipBtn, color: "#7C3AED", background: "#F5F3FF", border: "2px solid #DDD6FE" }}>📝 テスト</button>
+            <button onClick={() => setMode("thinkingTest")} style={{ ...S.chipBtn, color: "#4C6EF5", background: "#EEF2FF", border: "2px solid #C5CEFF" }}>🧠 思考</button>
           </div>
         </div>
         {/* Progress paw prints */}
