@@ -221,7 +221,8 @@ function TeacherDashboard({ onClose }) {
             )}
           </div>
         )}
-        {tab === "questions" && <div><div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+        {tab === "questions" && (<div>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
           {[{ num: logs.length, label: "総質問数", color: "#FF6B6B" }, { num: logs.filter(l => l.hintUsed).length, label: "💡ヒント使用", color: "#8B5CF6" }, { num: logs.filter(l => l.teacherComment).length, label: "✏️補足済み", color: "#F59E0B" }]
             .map(({ num, label, color }) => (
               <div key={label} style={{ background: "#fff", borderRadius: 14, padding: "10px 16px", flex: "1 1 70px", textAlign: "center", boxShadow: "0 2px 8px rgba(0,0,0,0.07)", border: `2.5px solid ${color}` }}>
@@ -563,6 +564,30 @@ export default function App() {
       </header>
 
       <main style={S.main}>
+        {tab === "tests" && (
+          <div>
+            {testLoading ? (
+              <div style={{ textAlign: "center", padding: 40, color: "#aaa" }}>読み込み中...</div>
+            ) : testResults.length === 0 ? (
+              <div style={{ textAlign: "center", padding: 40, color: "#aaa" }}>テスト結果がありません</div>
+            ) : (
+              testResults.map((r, i) => (
+                <div key={i} style={{ background: "#fff", borderRadius: 14, padding: 16, marginBottom: 10, border: "2px solid #FFE4E4" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+                    <div style={{ fontSize: 15, fontWeight: "900", color: "#333" }}>{r.studentName || "（名前なし）"}</div>
+                    <div style={{ fontSize: 22, fontWeight: "900", color: "#FF6B6B" }}>{r.score} <span style={{ fontSize: 13, color: "#aaa" }}>/ {r.total}</span></div>
+                  </div>
+                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                    <div style={{ fontSize: 12, background: "#FFF5F5", color: "#FF6B6B", padding: "4px 8px", borderRadius: 8, fontWeight: "700" }}>{r.subject}</div>
+                    <div style={{ fontSize: 12, background: "#F5F3FF", color: "#7C3AED", padding: "4px 8px", borderRadius: 8, fontWeight: "700" }}>{r.grade}</div>
+                    <div style={{ fontSize: 12, color: "#aaa", padding: "4px 8px" }}>{r.time}</div>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        )}
+        {tab === "questions" && (<div>
 
         {/* ── Hero banner (select only) ── */}
         {step === "select" && (
@@ -883,4 +908,3 @@ const S = {
   loginWrap: { minHeight: "100vh", background: "#FFF5F5", display: "flex", alignItems: "center", justifyContent: "center", padding: 16 },
   loginCard: { background: "#fff", borderRadius: 24, padding: 32, width: "100%", maxWidth: 360, boxShadow: "0 4px 24px rgba(255,107,107,0.15)", textAlign: "center", border: "2px solid #FFE4E4" },
 };
-// 2026年 4月25日 土曜日 09時49分50秒 JST
