@@ -89,7 +89,13 @@ export default function TestMenu({ onClose }) {
     setLoading(true);
     try {
       const keywordList = keywords.split(/[,、\n]/).map(k => k.trim()).filter(k => k);
-      const qs = await generateQuestions(subject, grade, selectedUnits, keywordList);
+      let qs;
+      if (subject === "calc") {
+        qs = Array.from({ length: 5 }, () => generateCalcQuestion(calcType));
+        qs = qs.map(q => ({ ...q, correct: String(q.correct), choices: q.choices.map(String) }));
+      } else {
+        qs = await generateQuestions(subject, grade, selectedUnits, keywordList);
+      }
       setQuestions(qs);
       setPhase("quiz");
     } catch (e) {
