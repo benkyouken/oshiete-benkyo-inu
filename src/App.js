@@ -880,7 +880,6 @@ export default function App() {
             </div>
           </div>
         )}
-      </main>
 
       <style>{`
         @keyframes bounce { 0%,80%,100%{transform:translateY(0)} 40%{transform:translateY(-7px)} }
