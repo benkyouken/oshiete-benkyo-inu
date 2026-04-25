@@ -149,9 +149,6 @@ function TeacherDashboard({ onClose }) {
   const [filter, setFilter] = useState("すべて"); const [expanded, setExpanded] = useState(null);
   const [editingId, setEditingId] = useState(null); const [draftComment, setDraftComment] = useState("");
   const [saving, setSaving] = useState(false);
-  const [tab, setTab] = useState("questions");
-  const [testResults, setTestResults] = useState([]);
-  const [testLoading, setTestLoading] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const [historyName, setHistoryName] = useState("");
   const [historyLogs, setHistoryLogs] = useState([]);
@@ -159,12 +156,6 @@ function TeacherDashboard({ onClose }) {
   const [historySearched, setHistorySearched] = useState(false);
 
   useEffect(() => { loadLogs().then(d => { setLogs(d); setLoading(false); }); }, []);
-  useEffect(() => {
-    if (tab !== "tests") return;
-    setTestLoading(true);
-    fetch("/api/chat", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "getTestResults" }) })
-      .then(r => r.json()).then(d => { setTestResults(d.results || []); setTestLoading(false); });
-  }, [tab]);
 
   const startEdit = log => { setEditingId(log.id); setDraftComment(log.teacherComment || ""); };
   const saveComment = async id => {
@@ -189,40 +180,11 @@ function TeacherDashboard({ onClose }) {
               <div style={S.logoSub}>質問ログ・補足コメント</div>
             </div>
           </div>
-          <div style={{ display: "flex", gap: 8 }}>
-            <button onClick={() => setTab("questions")} style={{ ...S.chipBtn, color: tab === "questions" ? "#fff" : "#D97706", background: tab === "questions" ? "#D97706" : "#FEF3C7", border: "2px solid #FCD34D" }}>📋 質問ログ</button>
-            <button onClick={() => setTab("tests")} style={{ ...S.chipBtn, color: tab === "tests" ? "#fff" : "#D97706", background: tab === "tests" ? "#D97706" : "#FEF3C7", border: "2px solid #FCD34D" }}>📝 テスト結果</button>
-            <button onClick={onClose} style={{ ...S.chipBtn, color: "#D97706", background: "#FEF3C7", border: "2px solid #FCD34D" }}>← もどる</button>
-          </div>
+          <button onClick={onClose} style={{ ...S.chipBtn, color: "#D97706", background: "#FEF3C7", border: "2px solid #FCD34D" }}>← もどる</button>
         </div>
       </header>
 
       <main style={S.main}>
-        {tab === "tests" && (
-          <div>
-            {testLoading ? (
-              <div style={{ textAlign: "center", padding: 40, color: "#aaa" }}>読み込み中...</div>
-            ) : testResults.length === 0 ? (
-              <div style={{ textAlign: "center", padding: 40, color: "#aaa" }}>テスト結果がありません</div>
-            ) : (
-              testResults.map((r, i) => (
-                <div key={i} style={{ background: "#fff", borderRadius: 14, padding: 16, marginBottom: 10, border: "2px solid #FFE4E4" }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-                    <div style={{ fontSize: 15, fontWeight: "900", color: "#333" }}>{r.studentName || "（名前なし）"}</div>
-                    <div style={{ fontSize: 22, fontWeight: "900", color: "#FF6B6B" }}>{r.score} <span style={{ fontSize: 13, color: "#aaa" }}>/ {r.total}</span></div>
-                  </div>
-                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                    <div style={{ fontSize: 12, background: "#FFF5F5", color: "#FF6B6B", padding: "4px 8px", borderRadius: 8, fontWeight: "700" }}>{r.subject}</div>
-                    <div style={{ fontSize: 12, background: "#F5F3FF", color: "#7C3AED", padding: "4px 8px", borderRadius: 8, fontWeight: "700" }}>{r.grade}</div>
-                    <div style={{ fontSize: 12, color: "#aaa", padding: "4px 8px" }}>{r.time}</div>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-        )}
-        {tab === "questions" && (
-          <div>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
           {[{ num: logs.length, label: "総質問数", color: "#FF6B6B" }, { num: logs.filter(l => l.hintUsed).length, label: "💡ヒント使用", color: "#8B5CF6" }, { num: logs.filter(l => l.teacherComment).length, label: "✏️補足済み", color: "#F59E0B" }]
             .map(({ num, label, color }) => (
@@ -370,8 +332,6 @@ function TeacherDashboard({ onClose }) {
                 </div>
               ))}
             </div>
-          </div>
-        )}
           </div>
         )}
       </main>
@@ -567,30 +527,6 @@ export default function App() {
       </header>
 
       <main style={S.main}>
-        {tab === "tests" && (
-          <div>
-            {testLoading ? (
-              <div style={{ textAlign: "center", padding: 40, color: "#aaa" }}>読み込み中...</div>
-            ) : testResults.length === 0 ? (
-              <div style={{ textAlign: "center", padding: 40, color: "#aaa" }}>テスト結果がありません</div>
-            ) : (
-              testResults.map((r, i) => (
-                <div key={i} style={{ background: "#fff", borderRadius: 14, padding: 16, marginBottom: 10, border: "2px solid #FFE4E4" }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-                    <div style={{ fontSize: 15, fontWeight: "900", color: "#333" }}>{r.studentName || "（名前なし）"}</div>
-                    <div style={{ fontSize: 22, fontWeight: "900", color: "#FF6B6B" }}>{r.score} <span style={{ fontSize: 13, color: "#aaa" }}>/ {r.total}</span></div>
-                  </div>
-                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                    <div style={{ fontSize: 12, background: "#FFF5F5", color: "#FF6B6B", padding: "4px 8px", borderRadius: 8, fontWeight: "700" }}>{r.subject}</div>
-                    <div style={{ fontSize: 12, background: "#F5F3FF", color: "#7C3AED", padding: "4px 8px", borderRadius: 8, fontWeight: "700" }}>{r.grade}</div>
-                    <div style={{ fontSize: 12, color: "#aaa", padding: "4px 8px" }}>{r.time}</div>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-        )}
-        {tab === "questions" && (<div>
 
         {/* ── Hero banner (select only) ── */}
         {step === "select" && (
@@ -880,8 +816,8 @@ export default function App() {
             </div>
           </div>
         )}
-
       </main>
+
       <style>{`
         @keyframes bounce { 0%,80%,100%{transform:translateY(0)} 40%{transform:translateY(-7px)} }
         button:active { transform: translateY(2px) !important; }
