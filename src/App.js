@@ -883,3 +883,4 @@ const S = {
   loginWrap: { minHeight: "100vh", background: "#FFF5F5", display: "flex", alignItems: "center", justifyContent: "center", padding: 16 },
   loginCard: { background: "#fff", borderRadius: 24, padding: 32, width: "100%", maxWidth: 360, boxShadow: "0 4px 24px rgba(255,107,107,0.15)", textAlign: "center", border: "2px solid #FFE4E4" },
 };
+// 2026年 4月25日 土曜日 09時49分50秒 JST
