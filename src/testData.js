@@ -25,6 +25,17 @@ export const SOCIAL_UNITS = {
 export const GRADES_ALL = ["小1","小2","小3","小4","小5","小6","中1","中2","中3","高1","高2","高3"];
 export const GRADES_MID_HIGH = ["中1","中2","中3","高1","高2","高3"];
 
+export const CALC_TYPES = [
+  { id: "kuku", label: "九九" },
+  { id: "addsub", label: "足し算・引き算" },
+  { id: "fourops", label: "四則計算" },
+  { id: "posneg_addsub", label: "正負の数の加法・減法" },
+  { id: "posneg_muldiv", label: "正負の数の乗法・除法" },
+  { id: "posneg_four", label: "正負の数の四則計算" },
+  { id: "algebra", label: "文字式の四則計算" },
+  { id: "equation", label: "方程式" },
+];
+
 export const SUBJECTS = [
   { id: "english", label: "英単語", emoji: "🔤", color: "#FF9F43", grades: GRADES_MID_HIGH },
   { id: "vocab", label: "言葉集め", emoji: "📖", color: "#54A0FF", grades: GRADES_ALL },
@@ -32,4 +43,5 @@ export const SUBJECTS = [
   { id: "science", label: "理科", emoji: "🔬", color: "#00B894", grades: Object.keys(SCIENCE_UNITS) },
   { id: "social", label: "社会", emoji: "🌏", color: "#E17055", grades: Object.keys(SOCIAL_UNITS) },
   { id: "keyword", label: "キーワード", emoji: "🔑", color: "#6C5CE7", grades: GRADES_ALL },
+  { id: "calc", label: "計算", emoji: "🔢", color: "#059669", grades: ["小1","小2","小3","小4","小5","小6","中1","中2","中3"] },
 ];

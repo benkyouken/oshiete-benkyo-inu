@@ -12,7 +12,7 @@ const CALC_TYPES = [
   { id: "equation", label: "方程式", emoji: "⚖️", grades: ["中1","中2","中3"] },
 ];
 
-function generateQuestion(type) {
+export function generateCalcQuestion(type) {
   const rand = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
   const shuffle = arr => [...arr].sort(() => Math.random() - 0.5);
 
@@ -178,7 +178,7 @@ export default function CalcTest({ onClose }) {
   const [studentName, setStudentName] = useState("");
 
   const handleStart = () => {
-    const qs = Array.from({ length: 5 }, () => generateQuestion(calcType));
+    const qs = Array.from({ length: 5 }, () => generateCalcQuestion(calcType));
     setQuestions(qs);
     setPhase("quiz");
   };

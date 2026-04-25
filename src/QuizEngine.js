@@ -21,8 +21,8 @@ function renderWithRuby(text) {
   });
 }
 
-export default function QuizEngine({ questions, studentName, grade, subject, onClose, onRetry }) {
-  const timeLimit = ["言葉集め", "理科", "社会", "キーワード"].includes(subject) ? 10 : 5;
+export default function QuizEngine({ questions, studentName, grade, subject, onClose, onRetry, timeLimit: timeLimitProp }) {
+  const timeLimit = timeLimitProp || (["言葉集め", "理科", "社会", "キーワード"].includes(subject) ? 10 : 5);
   const [current, setCurrent] = useState(0);
   const [selected, setSelected] = useState(null);
   const [score, setScore] = useState(0);

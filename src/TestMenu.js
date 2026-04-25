@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { SUBJECTS, SCIENCE_UNITS, SOCIAL_UNITS, GRADES_ALL, GRADES_MID_HIGH } from "./testData";
+import { SUBJECTS, SCIENCE_UNITS, SOCIAL_UNITS, GRADES_ALL, GRADES_MID_HIGH, CALC_TYPES } from "./testData";
+import { generateCalcQuestion } from "./CalcTest";
 import QuizEngine from "./QuizEngine";
 
 async function generateQuestions(subject, grade, units, keywords, difficulty) {
@@ -100,11 +101,14 @@ export default function TestMenu({ onClose }) {
   const gradeLabel = subject === "social" ? "教科を選んでね" : "学年を選んでね";
   const needsUnits = subject === "science" || subject === "social";
   const needsKeywords = subject === "keyword";
+  const needsCalcType = subject === "calc";
   const needsDifficulty = subject === "science" || subject === "social" || subject === "keyword";
+  const [calcType, setCalcType] = useState("");
   const canStart = subject && grade && 
     (!needsUnits || selectedUnits.length > 0) && 
     (!needsKeywords || keywords.trim().length > 0) &&
-    (!needsDifficulty || difficulty !== "");
+    (!needsDifficulty || difficulty !== "") &&
+    (!needsCalcType || calcType !== "");
 
   if (phase === "quiz") return (
     <QuizEngine
@@ -112,7 +116,8 @@ export default function TestMenu({ onClose }) {
       studentName={studentName}
       grade={grade}
       subject={subjectData?.label || subject}
-      onClose={(dest) => { if (dest === "menu") { setPhase("subject"); setSubject(null); setGrade(""); setSelectedUnits([]); setKeywords(""); } else { setPhase("subject"); setSubject(null); setGrade(""); setSelectedUnits([]); setKeywords(""); } }}
+      timeLimit={subject === "calc" ? 10 : undefined}
+      onClose={(dest) => { if (dest === "menu") { setPhase("subject"); setSubject(null); setGrade(""); setSelectedUnits([]); setKeywords(""); setCalcType(""); } else { setPhase("subject"); setSubject(null); setGrade(""); setSelectedUnits([]); setKeywords(""); setCalcType(""); } }}
       onRetry={(retryQs) => { setQuestions(retryQs); setPhase("quiz"); }}
     />
   );
@@ -186,6 +191,21 @@ export default function TestMenu({ onClose }) {
             <textarea value={keywords} onChange={e => setKeywords(e.target.value)}
               placeholder="例：光合成, 蒸散, 葉緑体"
               style={{ width: "100%", padding: "12px", fontSize: 14, border: "2.5px solid #FFE4E4", borderRadius: 12, fontFamily: "inherit", outline: "none", boxSizing: "border-box", resize: "vertical", height: 100, marginBottom: 24 }} />
+          </>
+        )}
+
+        {/* 計算種類選択 */}
+        {needsCalcType && grade && (
+          <>
+            <div style={{ fontSize: 13, fontWeight: "700", color: "#888", marginBottom: 8 }}>種類を選んでね</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 24 }}>
+              {CALC_TYPES.map(t => (
+                <button key={t.id} onClick={() => setCalcType(t.id)}
+                  style={{ padding: "12px 16px", fontSize: 13, fontWeight: "800", borderRadius: 12, border: calcType === t.id ? "3px solid #059669" : "2.5px solid #FFE4E4", background: calcType === t.id ? "#059669" : "#fff", color: calcType === t.id ? "#fff" : "#059669", cursor: "pointer", textAlign: "left" }}>
+                  🔢 {t.label}
+                </button>
+              ))}
+            </div>
           </>
         )}
 
