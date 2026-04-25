@@ -372,6 +372,8 @@ function TeacherDashboard({ onClose }) {
             </div>
           </div>
         )}
+          </div>
+        )}
       </main>
     </div>
   );
