@@ -5,7 +5,7 @@ async function generateThinkingQuestions() {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      model: "claude-sonnet-4-20250514",
+      model: "claude-sonnet-5-5",
       max_tokens: 2000,
       system: `あなたは論理思考問題を作成するAIです。必ずJSON形式のみで返答してください。前置きや説明は一切不要です。`,
       messages: [{

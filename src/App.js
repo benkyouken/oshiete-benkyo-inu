@@ -88,7 +88,7 @@ const subjectBg = sub => SUBJECTS.find(s => s.label === sub)?.bg || "#f9f9f9";
 async function callClaude(systemPrompt, userContent) {
   const res = await fetch("/api/chat", {
     method: "POST", headers: { "Content-Type": "application/json", "x-api-key": process.env.REACT_APP_ANTHROPIC_API_KEY, "anthropic-version": "2023-06-01" },
-    body: JSON.stringify({ model: "claude-sonnet-4-20250514", max_tokens: 1000, system: systemPrompt, messages: [{ role: "user", content: userContent }] }),
+    body: JSON.stringify({ model: "claude-sonnet-5-5", max_tokens: 1000, system: systemPrompt, messages: [{ role: "user", content: userContent }] }),
   });
   const data = await res.json();
   if (data.error) throw new Error(data.error.message);
@@ -462,7 +462,7 @@ export default function App() {
       ];
       const res = await fetch("/api/chat", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ model: "claude-sonnet-4-20250514", max_tokens: 1000, system: SYSTEM_PROMPT, messages }),
+        body: JSON.stringify({ model: "claude-sonnet-5-5", max_tokens: 1000, system: SYSTEM_PROMPT, messages }),
       });
       const data = await res.json();
       if (data.error) throw new Error(data.error.message);

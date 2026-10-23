@@ -7,7 +7,7 @@ async function generateQuestions(grade) {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      model: "claude-sonnet-4-20250514",
+      model: "claude-sonnet-5-5",
       max_tokens: 1000,
       system: `あなたは英単語テストの問題作成AIです。必ずJSON形式のみで返答してください。前置きや説明は一切不要です。`,
       messages: [{

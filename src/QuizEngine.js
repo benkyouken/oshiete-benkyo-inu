@@ -145,7 +145,7 @@ function ResultWithChat({ wrongAnswers, finalScore, total, questions, answers, s
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          model: "claude-sonnet-4-20250514",
+          model: "claude-sonnet-5-5",
           max_tokens: 1000,
           system: `あなたは「勉強犬」という名前の元気でやさしい犬の家庭教師です。語尾に「わん」「だよ」など犬らしさを自然に混ぜてください。${grade}の生徒に分かりやすく説明してください。`,
           messages: [{
@@ -178,7 +178,7 @@ function ResultWithChat({ wrongAnswers, finalScore, total, questions, answers, s
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          model: "claude-sonnet-4-20250514",
+          model: "claude-sonnet-5-5",
           max_tokens: 1000,
           system: `あなたは「勉強犬」という名前の元気でやさしい犬の家庭教師です。語尾に「わん」「だよ」など犬らしさを自然に混ぜてください。${grade}の${subject}のテスト結果について質問を受けています。`,
           messages: newMessages
